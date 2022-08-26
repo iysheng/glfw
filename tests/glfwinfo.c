@@ -675,11 +675,13 @@ int main(int argc, char** argv)
     if (!glfwInit())
         exit(EXIT_FAILURE);
 
+
     print_version();
     print_platform();
 
     glfwWindowHint(GLFW_VISIBLE, false);
 
+#if 0
     glfwWindowHint(GLFW_CLIENT_API, client_api);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, context_major);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, context_minor);
@@ -690,6 +692,12 @@ int main(int argc, char** argv)
     glfwWindowHint(GLFW_CONTEXT_NO_ERROR, context_no_error);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, opengl_forward);
     glfwWindowHint(GLFW_OPENGL_PROFILE, opengl_profile);
+#else
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+#endif
 
     glfwWindowHint(GLFW_RED_BITS, fb_red_bits);
     glfwWindowHint(GLFW_BLUE_BITS, fb_blue_bits);
