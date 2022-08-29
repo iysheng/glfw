@@ -292,6 +292,7 @@ typedef struct _GLFWlibraryWayland
     struct wl_seat*             seat;
     struct wl_pointer*          pointer;
     struct wl_keyboard*         keyboard;
+    struct wl_touch*            touch;
     struct wl_data_device_manager*          dataDeviceManager;
     struct wl_data_device*      dataDevice;
     struct xdg_wm_base*         wmBase;
@@ -373,6 +374,11 @@ typedef struct _GLFWlibraryWayland
 
     _GLFWwindow*                pointerFocus;
     _GLFWwindow*                keyboardFocus;
+
+    int*                        touchIDs;
+    _GLFWwindow**               touchFocuses;
+    int                         touchSize;
+    int                         touchEnabled;
 
     struct {
         void*                                       handle;
@@ -478,6 +484,8 @@ void _glfwSetWindowMousePassthroughWayland(_GLFWwindow* window, GLFWbool enabled
 
 void _glfwSetRawMouseMotionWayland(_GLFWwindow* window, GLFWbool enabled);
 GLFWbool _glfwRawMouseMotionSupportedWayland(void);
+
+void _glfwSetTouchInputWayland(_GLFWwindow* window, int enabled);
 
 void _glfwPollEventsWayland(void);
 void _glfwWaitEventsWayland(void);

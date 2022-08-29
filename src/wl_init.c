@@ -384,6 +384,7 @@ GLFWbool _glfwConnectWayland(int platformID, _GLFWplatform* platform)
         _glfwSetCursorModeWayland,
         _glfwSetRawMouseMotionWayland,
         _glfwRawMouseMotionSupportedWayland,
+        _glfwSetTouchInputWayland,
         _glfwCreateCursorWayland,
         _glfwCreateStandardCursorWayland,
         _glfwDestroyCursorWayland,
@@ -678,7 +679,14 @@ int _glfwInitWayland(void)
         return GLFW_FALSE;
     }
 
-    if (!_glfw.wl.shm)
+    _glfw.wl.touchFocuses = _glfw_calloc(4, sizeof(_GLFWwindow*));
+    _glfw.wl.touchIDs = _glfw_calloc(4, sizeof(int));
+    _glfw.wl.touchSize = 4;
+
+    for (int i = 0; i < _glfw.wl.touchSize; ++i)
+        _glfw.wl.touchIDs[i] = -1;
+
+    if (_glfw.wl.pointer && !_glfw.wl.shm)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
                         "Wayland: Failed to find wl_shm in your compositor");
@@ -724,6 +732,10 @@ void _glfwTerminateWayland(void)
         _glfw.wl.xkb.handle = NULL;
     }
 
+    if (_glfw.wl.touchFocuses)
+        _glfw_free(_glfw.wl.touchFocuses);
+    if (_glfw.wl.touchIDs)
+        _glfw_free(_glfw.wl.touchIDs);
     if (_glfw.wl.cursorTheme)
         wl_cursor_theme_destroy(_glfw.wl.cursorTheme);
     if (_glfw.wl.cursorThemeHiDPI)

@@ -902,8 +902,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
             window->win32.lastCursorPosX = x;
             window->win32.lastCursorPosY = y;
-
-            return 0;
+            break;
         }
 
         case WM_INPUT:
@@ -1123,6 +1122,81 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                 mmi->ptMaxSize.y = mi.rcWork.bottom - mi.rcWork.top;
             }
 
+            return 0;
+        }
+
+        case WM_POINTERDOWN:
+        case WM_POINTERUP:
+        case WM_POINTERUPDATE:
+        {
+            POINTER_TOUCH_INFO touchInfo;
+            POINTER_INPUT_TYPE pointerType;
+            const UINT32 pointerID = GET_POINTERID_WPARAM(wParam);
+
+            if (!window->touchInput)
+                break;
+
+            if (!GetPointerType(pointerID, &pointerType))
+                break;
+
+            if (pointerType == PT_TOUCH && GetPointerTouchInfo(pointerID, &touchInfo))
+            {
+                POINT pos = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+                ScreenToClient(window->win32.handle, &pos);
+
+                if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_DOWN)
+                {
+                    if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT)
+                        _glfwInputTouch(window, pointerID, GLFW_SCREEN_TOUCH, GLFW_PRESS, pos.x, pos.y);
+                }
+                else if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_UPDATE)
+                {
+                    if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT)
+                        _glfwInputTouch(window, pointerID, GLFW_SCREEN_TOUCH, GLFW_MOVE, pos.x, pos.y);
+                }
+                else if (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_UP)
+                    _glfwInputTouch(window, pointerID, GLFW_SCREEN_TOUCH, GLFW_RELEASE, pos.x, pos.y);
+            }
+
+            return 0;
+        }
+
+        case WM_TOUCH:
+        {
+            TOUCHINPUT* touches;
+            const HTOUCHINPUT input = (HTOUCHINPUT) lParam;
+            const UINT count = LOWORD(wParam);
+
+            if (IsWindows8OrGreater())
+                break;
+
+            touches = _glfw_calloc(count, sizeof(TOUCHINPUT));
+
+            if (GetTouchInputInfo(input, count, touches, sizeof(TOUCHINPUT)))
+            {
+                UINT i;
+                POINT offset = {0};
+
+                ScreenToClient(window->win32.handle, &offset);
+
+                for (i = 0;  i < count;  i++)
+                {
+                    const int touchID = touches[i].dwID;
+                    const double xpos = touches[i].x / 100.0 + offset.x;
+                    const double ypos = touches[i].y / 100.0 + offset.y;
+
+                    if (touches[i].dwFlags & TOUCHEVENTF_DOWN)
+                        _glfwInputTouch(window, touchID, GLFW_SCREEN_TOUCH, GLFW_PRESS, xpos, ypos);
+                    else if (touches[i].dwFlags & TOUCHEVENTF_UP)
+                        _glfwInputTouch(window, touchID, GLFW_SCREEN_TOUCH, GLFW_RELEASE, xpos, ypos);
+                    else if (touches[i].dwFlags & TOUCHEVENTF_MOVE)
+                        _glfwInputTouch(window, touchID, GLFW_SCREEN_TOUCH, GLFW_MOVE, xpos, ypos);
+                }
+
+                CloseTouchInputHandle(input);
+            }
+
+            _glfw_free(touches);
             return 0;
         }
 
@@ -2038,6 +2112,23 @@ void _glfwSetRawMouseMotionWin32(_GLFWwindow *window, GLFWbool enabled)
 GLFWbool _glfwRawMouseMotionSupportedWin32(void)
 {
     return GLFW_TRUE;
+}
+
+void _glfwSetTouchInputWin32(_GLFWwindow* window, int enabled)
+{
+    if (!IsWindows7OrGreater())
+    {
+        _glfwInputError(GLFW_FEATURE_UNAVAILABLE, "Win32: Touch input requires Windows 7");
+        return;
+    }
+
+    if (!IsWindows8OrGreater())
+    {
+        if (enabled)
+            RegisterTouchWindow(window->win32.handle, 0);
+        else
+            UnregisterTouchWindow(window->win32.handle);
+    }
 }
 
 void _glfwPollEventsWin32(void)

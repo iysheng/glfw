@@ -142,6 +142,8 @@ typedef struct _GLFWwindowNS
     id              delegate;
     id              view;
     id              layer;
+    id              touches;
+    unsigned int    touchCount;
 
     GLFWbool        maximized;
     GLFWbool        occluded;
@@ -250,6 +252,8 @@ void _glfwSetWindowMousePassthroughCocoa(_GLFWwindow* window, GLFWbool enabled);
 
 void _glfwSetRawMouseMotionCocoa(_GLFWwindow *window, GLFWbool enabled);
 GLFWbool _glfwRawMouseMotionSupportedCocoa(void);
+
+void _glfwSetTouchInputCocoa(_GLFWwindow* window, int enabled);
 
 void _glfwPollEventsCocoa(void);
 void _glfwWaitEventsCocoa(void);

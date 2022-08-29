@@ -344,6 +344,12 @@ void _glfwInputScroll(_GLFWwindow* window, double xoffset, double yoffset)
         window->callbacks.scroll((GLFWwindow*) window, xoffset, yoffset);
 }
 
+void _glfwInputTouch(_GLFWwindow* window, int touch, int type, int action, double xpos, double ypos)
+{
+    if (window->callbacks.touch)
+        window->callbacks.touch((GLFWwindow*) window, touch, type, action, xpos, ypos);
+}
+
 // Notifies shared code of a mouse button click event
 //
 void _glfwInputMouseClick(_GLFWwindow* window, int button, int action, int mods)
@@ -577,6 +583,8 @@ GLFWAPI int glfwGetInputMode(GLFWwindow* handle, int mode)
             return window->lockKeyMods;
         case GLFW_RAW_MOUSE_MOTION:
             return window->rawMouseMotion;
+        case GLFW_TOUCH:
+            return window->touchInput;
     }
 
     _glfwInputError(GLFW_INVALID_ENUM, "Invalid input mode 0x%08X", mode);
@@ -682,6 +690,17 @@ GLFWAPI void glfwSetInputMode(GLFWwindow* handle, int mode, int value)
 
             window->rawMouseMotion = value;
             _glfw.platform.setRawMouseMotion(window, value);
+            return;
+        }
+
+        case GLFW_TOUCH:
+        {
+            value = value ? GLFW_TRUE : GLFW_FALSE;
+            if (window->touchInput == value)
+                return;
+
+            window->touchInput = value;
+            _glfw.platform.setTouchInput(window, value);
             return;
         }
     }
@@ -1449,6 +1468,14 @@ GLFWAPI int glfwGetGamepadState(int jid, GLFWgamepadstate* state)
     }
 
     return GLFW_TRUE;
+}
+
+GLFWAPI GLFWtouchfun glfwSetTouchCallback(GLFWwindow* handle, GLFWtouchfun cbfun)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+    _GLFW_SWAP(GLFWtouchfun, window->callbacks.touch, cbfun);
+    return cbfun;
 }
 
 GLFWAPI void glfwSetClipboardString(GLFWwindow* handle, const char* string)

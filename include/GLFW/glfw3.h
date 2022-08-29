@@ -343,6 +343,8 @@ extern "C" {
  *  @ingroup input
  */
 #define GLFW_REPEAT                 2
+#define GLFW_MOVE                   3
+#define GLFW_CANCEL                 4
 /*! @} */
 
 /*! @defgroup hat_state Joystick hat states
@@ -1142,6 +1144,7 @@ extern "C" {
 #define GLFW_STICKY_MOUSE_BUTTONS   0x00033003
 #define GLFW_LOCK_KEY_MODS          0x00033004
 #define GLFW_RAW_MOUSE_MOTION       0x00033005
+#define GLFW_TOUCH                  0x00033006
 
 #define GLFW_CURSOR_NORMAL          0x00034001
 #define GLFW_CURSOR_HIDDEN          0x00034002
@@ -1271,6 +1274,9 @@ extern "C" {
  */
 #define GLFW_HAND_CURSOR            GLFW_POINTING_HAND_CURSOR
 /*! @} */
+
+#define GLFW_SCREEN_TOUCH           0x00038001
+#define GLFW_TRACKPAD_TOUCH         0x00038002
 
 #define GLFW_CONNECTED              0x00040001
 #define GLFW_DISCONNECTED           0x00040002
@@ -1823,6 +1829,31 @@ typedef void (* GLFWcursorenterfun)(GLFWwindow* window, int entered);
  *  @ingroup input
  */
 typedef void (* GLFWscrollfun)(GLFWwindow* window, double xoffset, double yoffset);
+
+/*! @brief The function pointer type for touch callbacks.
+ *
+ *  This is the function pointer type for touch callbacks.  A touch callback function has
+ *  the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int touch, int action)
+ *  @endcode
+ *
+ *  @param[in] window The window that received the event.
+ *  @param[in] touch The touch that started or ended.
+ *  @param[in] type One of @ref GLFW_SCREEN_TOUCH or @ref GLFW_TRACKPAD_TOUCH.
+ *  @param[in] action One of @ref GLFW_PRESS, @ref GLFW_MOVE, @ref GLFW_RELEASE
+ *  or @ref GLFW_CANCEL.
+ *  @param[in] xpos The new x-coordinate of the touch.
+ *  @param[in] ypos The new y-coordinate of the touch.
+ *
+ *  @sa @ref touch
+ *  @sa @ref glfwSetTouchCallback
+ *
+ *  @since Added in version 3.4.
+ *
+ *  @ingroup input
+ */
+typedef void (* GLFWtouchfun)(GLFWwindow*,int,int,int,double,double);
 
 /*! @brief The function pointer type for keyboard key callbacks.
  *
@@ -4545,13 +4576,13 @@ GLFWAPI void glfwPostEmptyEvent(void);
  *
  *  This function returns the value of an input option for the specified window.
  *  The mode must be one of @ref GLFW_CURSOR, @ref GLFW_STICKY_KEYS,
- *  @ref GLFW_STICKY_MOUSE_BUTTONS, @ref GLFW_LOCK_KEY_MODS or
- *  @ref GLFW_RAW_MOUSE_MOTION.
+ *  @ref GLFW_STICKY_MOUSE_BUTTONS, @ref GLFW_LOCK_KEY_MODS, @ref GLFW_RAW_MOUSE_MOTION or
+ *  @ref GLFW_TOUCH.
  *
  *  @param[in] window The window to query.
  *  @param[in] mode One of `GLFW_CURSOR`, `GLFW_STICKY_KEYS`,
- *  `GLFW_STICKY_MOUSE_BUTTONS`, `GLFW_LOCK_KEY_MODS` or
- *  `GLFW_RAW_MOUSE_MOTION`.
+ *  `GLFW_STICKY_MOUSE_BUTTONS`, `GLFW_LOCK_KEY_MODS`, `GLFW_RAW_MOUSE_MOTION` or
+ *  `GLFW_TOUCH`.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
  *  GLFW_INVALID_ENUM.
@@ -4570,8 +4601,8 @@ GLFWAPI int glfwGetInputMode(GLFWwindow* window, int mode);
  *
  *  This function sets an input mode option for the specified window.  The mode
  *  must be one of @ref GLFW_CURSOR, @ref GLFW_STICKY_KEYS,
- *  @ref GLFW_STICKY_MOUSE_BUTTONS, @ref GLFW_LOCK_KEY_MODS or
- *  @ref GLFW_RAW_MOUSE_MOTION.
+ *  @ref GLFW_STICKY_MOUSE_BUTTONS, @ref GLFW_LOCK_KEY_MODS, @ref GLFW_RAW_MOUSE_MOTION or
+ *  @ref GLFW_TOUCH.
  *
  *  If the mode is `GLFW_CURSOR`, the value must be one of the following cursor
  *  modes:
@@ -4611,10 +4642,13 @@ GLFWAPI int glfwGetInputMode(GLFWwindow* window, int mode);
  *  attempting to set this will emit @ref GLFW_FEATURE_UNAVAILABLE.  Call @ref
  *  glfwRawMouseMotionSupported to check for support.
  *
+ *  If the mode is `GLFW_TOUCH`, the value must be either `GLFW_TRUE` to enable touch
+ *  input, or `GLFW_FALSE` to disable it.  If touch input is not supported, attempting to
+ *  set this will emit @ref GLFW_FEATURE_UNAVAILABLE.
+ *
  *  @param[in] window The window whose input mode to set.
- *  @param[in] mode One of `GLFW_CURSOR`, `GLFW_STICKY_KEYS`,
- *  `GLFW_STICKY_MOUSE_BUTTONS`, `GLFW_LOCK_KEY_MODS` or
- *  `GLFW_RAW_MOUSE_MOTION`.
+ *  @param[in] mode One of `GLFW_CURSOR`, `GLFW_STICKY_KEYS`, `GLFW_STICKY_MOUSE_BUTTONS`,
+ *  `GLFW_LOCK_KEY_MODS`, `GLFW_RAW_MOUSE_MOTION` or `GLFW_TOUCH`.
  *  @param[in] value The new value of the specified input mode.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED, @ref
@@ -5277,10 +5311,10 @@ GLFWAPI GLFWcursorenterfun glfwSetCursorEnterCallback(GLFWwindow* window, GLFWcu
  *
  *  This function sets the scroll callback of the specified window, which is
  *  called when a scrolling device is used, such as a mouse wheel or scrolling
- *  area of a touchpad.
+ *  area of a trackpad.
  *
  *  The scroll callback receives all scrolling input, like that from a mouse
- *  wheel or a touchpad scrolling area.
+ *  wheel or a trackpad scrolling area.
  *
  *  @param[in] window The window whose callback to set.
  *  @param[in] callback The new scroll callback, or `NULL` to remove the
@@ -5306,6 +5340,31 @@ GLFWAPI GLFWcursorenterfun glfwSetCursorEnterCallback(GLFWwindow* window, GLFWcu
  *  @ingroup input
  */
 GLFWAPI GLFWscrollfun glfwSetScrollCallback(GLFWwindow* window, GLFWscrollfun callback);
+
+/*! @brief Sets the touch callback.
+ *
+ *  This function sets the touch callback, which is called when a touch contact begins,
+ *  moves or ends.
+ *
+ *  @param[in] window The window whose callback to set.
+ *  @param[in] cbfun The new touch callback, or `NULL` to remove the currently
+ *  set callback.
+ *  @return The previously set callback, or `NULL` if no callback was set or an
+ *  error occurred.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *
+ *  @remark @win32 Touch input is only supported on Windows 7 or later.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @sa @ref touch
+ *
+ *  @since Added in version 3.4.
+ *
+ *  @ingroup input
+ */
+GLFWAPI GLFWtouchfun glfwSetTouchCallback(GLFWwindow* window, GLFWtouchfun cbfun);
 
 /*! @brief Sets the path drop callback.
  *

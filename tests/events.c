@@ -205,9 +205,26 @@ static const char* get_action_name(int action)
             return "released";
         case GLFW_REPEAT:
             return "repeated";
+        case GLFW_MOVE:
+            return "moved";
+        case GLFW_CANCEL:
+            return "cancelled";
     }
 
     return "caused unknown action";
+}
+
+static const char* get_touch_type_name(int type)
+{
+    switch (type)
+    {
+        case GLFW_SCREEN_TOUCH:
+            return "screen";
+        case GLFW_TRACKPAD_TOUCH:
+            return "trackpad";
+    }
+
+    return "unknown device";
 }
 
 static const char* get_button_name(int button)
@@ -397,6 +414,14 @@ static void scroll_callback(GLFWwindow* window, double x, double y)
            counter++, slot->number, glfwGetTime(), x, y);
 }
 
+static void touch_callback(GLFWwindow* window, int touch, int type, int action, double xpos, double ypos)
+{
+    Slot* slot = glfwGetWindowUserPointer(window);
+    printf("%08x to %i at %0.3f: Touch %i on %s %s: %0.3f %0.3f\n",
+           counter++, slot->number, glfwGetTime(),
+           touch, get_touch_type_name(type), get_action_name(action), xpos, ypos);
+}
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     Slot* slot = glfwGetWindowUserPointer(window);
@@ -439,6 +464,15 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
             glfwSetInputMode(window, GLFW_LOCK_KEY_MODS, !state);
 
             printf("(( lock key mods %s ))\n", !state ? "enabled" : "disabled");
+            break;
+        }
+
+        case GLFW_KEY_T:
+        {
+            const int state = glfwGetInputMode(window, GLFW_TOUCH);
+            glfwSetInputMode(window, GLFW_TOUCH, !state);
+
+            printf("(( touch %s ))\n", !state ? "enabled" : "disabled");
             break;
         }
     }
@@ -639,6 +673,7 @@ int main(int argc, char** argv)
         glfwSetKeyCallback(slots[i].window, key_callback);
         glfwSetCharCallback(slots[i].window, char_callback);
         glfwSetDropCallback(slots[i].window, drop_callback);
+        glfwSetTouchCallback(slots[i].window, touch_callback);
 
         glfwMakeContextCurrent(slots[i].window);
         gladLoadGL(glfwGetProcAddress);
