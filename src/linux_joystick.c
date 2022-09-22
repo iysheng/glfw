@@ -380,9 +380,13 @@ void _glfwTerminateJoysticksLinux(void)
     }
 }
 
+/* wayland 轮询 joystick 的函数 */
 GLFWbool _glfwPollJoystickLinux(_GLFWjoystick* js, int mode)
 {
     // Read all queued events (non-blocking)
+    GLFWbool event_valid = GLFW_FALSE;
+    if (mode == _GLFW_POLL_PRESENCE)
+        goto end;
     for (;;)
     {
         struct input_event e;
@@ -393,7 +397,8 @@ GLFWbool _glfwPollJoystickLinux(_GLFWjoystick* js, int mode)
             // Reset the joystick slot if the device was disconnected
             if (errno == ENODEV)
                 closeJoystick(js);
-
+            else if (errno == EAGAIN)
+                return event_valid;
             break;
         }
 
@@ -404,7 +409,9 @@ GLFWbool _glfwPollJoystickLinux(_GLFWjoystick* js, int mode)
             else if (e.code == SYN_REPORT)
             {
                 _glfw.linjs.dropped = GLFW_FALSE;
+                /* 从驱动获取坐标信息 */
                 pollAbsState(js);
+                event_valid = GLFW_TRUE;
             }
         }
 
@@ -414,9 +421,11 @@ GLFWbool _glfwPollJoystickLinux(_GLFWjoystick* js, int mode)
         if (e.type == EV_KEY)
             handleKeyEvent(js, e.code, e.value);
         else if (e.type == EV_ABS)
+            /* 处理 abs 类型的 event */
             handleAbsEvent(js, e.code, e.value);
     }
 
+end:
     return js->connected;
 }
 
