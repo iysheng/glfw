@@ -1591,6 +1591,7 @@ static void touchHandleDown(void* data,
     xpos = wl_fixed_to_double(x);
     ypos = wl_fixed_to_double(y);
 
+    //printf("%f,%f red dbg touch\n", xpos, ypos);
     // Searching for an empty slot for our new contact point
     for (i = 0; i < _glfw.wl.touchSize; ++i)
     {
@@ -1706,12 +1707,15 @@ static void touchHandleCancel(void* data,
         int id = _glfw.wl.touchIDs[i];
         _GLFWwindow* window = _glfw.wl.touchFocuses[i];
 
+        /* 释放的时候 x 和 y 坐标总是 0.0 和 0.0 这里需要优化 */
+        /* 回调 glfw 的触摸回调函数 */
         _glfwInputTouch(window, id, GLFW_SCREEN_TOUCH, GLFW_RELEASE, 0., 0.);
         _glfw.wl.touchFocuses[i] = NULL;
         _glfw.wl.touchIDs[i] = -1;
     }
 }
 
+/* wl 触摸的 listener */
 static const struct wl_touch_listener touchListener = {
     touchHandleDown,
     touchHandleUp,
@@ -1746,6 +1750,7 @@ static void seatHandleCapabilities(void* userData,
         _glfw.wl.keyboard = NULL;
     }
 
+    /* 如果这个 wayland 支持触摸，那么关联触摸的回调函数 */
     if ((caps & WL_SEAT_CAPABILITY_TOUCH) && !_glfw.wl.touch)
     {
         _glfw.wl.touch = wl_seat_get_touch(seat);

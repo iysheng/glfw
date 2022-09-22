@@ -48,6 +48,7 @@ static const struct
 #if defined(_GLFW_X11)
     { GLFW_PLATFORM_X11, _glfwConnectX11 },
 #endif
+    /* wayland 平台 */
 #if defined(_GLFW_WAYLAND)
     { GLFW_PLATFORM_WAYLAND, _glfwConnectWayland },
 #endif
@@ -58,6 +59,7 @@ GLFWbool _glfwSelectPlatform(int desiredID, _GLFWplatform* platform)
     const size_t count = sizeof(supportedPlatforms) / sizeof(supportedPlatforms[0]);
     size_t i;
 
+    /* 根据传递的优先选用的平台 ID 初始化 */
     if (desiredID != GLFW_ANY_PLATFORM &&
         desiredID != GLFW_PLATFORM_WIN32 &&
         desiredID != GLFW_PLATFORM_COCOA &&
@@ -83,6 +85,7 @@ GLFWbool _glfwSelectPlatform(int desiredID, _GLFWplatform* platform)
         // If there is exactly one platform available for auto-selection, let it emit the
         // error on failure as the platform-specific error description may be more helpful
         if (count == 1)
+            /* 执行指定平台的 connect 函数 */
             return supportedPlatforms[0].connect(supportedPlatforms[0].ID, platform);
 
         for (i = 0;  i < count;  i++)

@@ -427,7 +427,7 @@ void _glfwInputJoystick(_GLFWjoystick* js, int event)
     assert(event == GLFW_CONNECTED || event == GLFW_DISCONNECTED);
 
     if (event == GLFW_CONNECTED)
-        js->connected = GLFW_TRUE;
+        js->connected = GLFW_TRUE; /* 在这里标记了这个 joystick 已经链接 */
     else if (event == GLFW_DISCONNECTED)
         js->connected = GLFW_FALSE;
 

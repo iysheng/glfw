@@ -92,6 +92,7 @@ static const struct xdg_wm_base_listener wmBaseListener =
     wmBaseHandlePing
 };
 
+/* wayland 的 listener */
 static void registryHandleGlobal(void* userData,
                                  struct wl_registry* registry,
                                  uint32_t name,
@@ -195,7 +196,7 @@ static void registryHandleGlobalRemove(void* userData,
     }
 }
 
-
+/* 注册一个 listener */
 static const struct wl_registry_listener registryListener =
 {
     registryHandleGlobal,
@@ -372,6 +373,9 @@ static GLFWbool loadCursorTheme(void)
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
 
+/*
+ * wayland 相关的 glfw 平台初始化
+ * */
 GLFWbool _glfwConnectWayland(int platformID, _GLFWplatform* platform)
 {
     const _GLFWplatform wayland =
@@ -459,6 +463,7 @@ GLFWbool _glfwConnectWayland(int platformID, _GLFWplatform* platform)
         _glfwCreateWindowSurfaceWayland,
     };
 
+    /* 获取一个 module, 指向 libwayland-client.so.0 */
     void* module = _glfwPlatformLoadModule("libwayland-client.so.0");
     if (!module)
     {
@@ -485,6 +490,7 @@ GLFWbool _glfwConnectWayland(int platformID, _GLFWplatform* platform)
         return GLFW_FALSE;
     }
 
+    /* 创建一个到 wayland server 的链接 */
     struct wl_display* display = wl_display_connect(NULL);
     if (!display)
     {
@@ -495,9 +501,12 @@ GLFWbool _glfwConnectWayland(int platformID, _GLFWplatform* platform)
         return GLFW_FALSE;
     }
 
+    /* 关联这个 display 和 module 到全局的 _glfw 结构体 */
     _glfw.wl.display = display;
+    /* 关联 wayland-client.so.0 到 client.handle 句柄 */
     _glfw.wl.client.handle = module;
 
+    /* 关联具体平台信息到指定的 platform */
     *platform = wayland;
     return GLFW_TRUE;
 }
@@ -508,6 +517,7 @@ int _glfwInitWayland(void)
     _glfw.wl.keyRepeatTimerfd = -1;
     _glfw.wl.cursorTimerfd = -1;
 
+    /* 从 wayland-client.so.0 文件中提取相关的符号，关联到 client 结构体 */
     _glfw.wl.client.display_flush = (PFN_wl_display_flush)
         _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_display_flush");
     _glfw.wl.client.display_cancel_read = (PFN_wl_display_cancel_read)
@@ -543,6 +553,7 @@ int _glfwInitWayland(void)
     _glfw.wl.client.proxy_marshal_flags = (PFN_wl_proxy_marshal_flags)
         _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_proxy_marshal_flags");
 
+    /* 如果任一个符号为空，说明出现异常 */
     if (!_glfw.wl.client.display_flush ||
         !_glfw.wl.client.display_cancel_read ||
         !_glfw.wl.client.display_dispatch_pending ||
@@ -564,6 +575,7 @@ int _glfwInitWayland(void)
         return GLFW_FALSE;
     }
 
+    /* 关联 cursor 的相关句柄 */
     _glfw.wl.cursor.handle = _glfwPlatformLoadModule("libwayland-cursor.so.0");
     if (!_glfw.wl.cursor.handle)
     {
@@ -581,6 +593,7 @@ int _glfwInitWayland(void)
     _glfw.wl.cursor.image_get_buffer = (PFN_wl_cursor_image_get_buffer)
         _glfwPlatformGetModuleSymbol(_glfw.wl.cursor.handle, "wl_cursor_image_get_buffer");
 
+    /* 关联 egl 的相关句柄 */
     _glfw.wl.egl.handle = _glfwPlatformLoadModule("libwayland-egl.so.1");
     if (!_glfw.wl.egl.handle)
     {
@@ -596,6 +609,7 @@ int _glfwInitWayland(void)
     _glfw.wl.egl.window_resize = (PFN_wl_egl_window_resize)
         _glfwPlatformGetModuleSymbol(_glfw.wl.egl.handle, "wl_egl_window_resize");
 
+    /* xkb 是键盘相关句柄 */
     _glfw.wl.xkb.handle = _glfwPlatformLoadModule("libxkbcommon.so.0");
     if (!_glfw.wl.xkb.handle)
     {

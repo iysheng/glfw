@@ -342,7 +342,7 @@ extern "C" {
  *
  *  @ingroup input
  */
-#define GLFW_REPEAT                 2
+#define GLFW_REPEAT                 2 /* 针对键盘可以认为是长按 */
 #define GLFW_MOVE                   3
 #define GLFW_CANCEL                 4
 /*! @} */

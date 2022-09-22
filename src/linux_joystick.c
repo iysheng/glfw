@@ -98,6 +98,7 @@ static void handleAbsEvent(_GLFWjoystick* js, int code, int value)
             normalized = normalized * 2.0f - 1.0f;
         }
 
+        /* 填充坐标 */
         _glfwInputJoystickAxis(js, index, normalized);
     }
 }
@@ -116,6 +117,7 @@ static void pollAbsState(_GLFWjoystick* js)
         if (ioctl(js->linjs.fd, EVIOCGABS(code), info) < 0)
             continue;
 
+        /* 填充获取到的 abs 坐标信息 */
         handleAbsEvent(js, code, info->value);
     }
 }
@@ -235,6 +237,7 @@ static GLFWbool openJoystickDevice(const char* path)
 
     pollAbsState(js);
 
+    /* 在这里会标记指定的 joystick 已经链接 */
     _glfwInputJoystick(js, GLFW_CONNECTED);
     return GLFW_TRUE;
 }

@@ -523,7 +523,7 @@ struct _GLFWcontext
 };
 
 // Window and context structure
-//
+// GLFW window 抽象
 struct _GLFWwindow
 {
     struct _GLFWwindow* next;
@@ -549,11 +549,13 @@ struct _GLFWwindow
     GLFWbool            stickyKeys;
     GLFWbool            stickyMouseButtons;
     GLFWbool            lockKeyMods;
-    GLFWbool            touchInput;
+    GLFWbool            touchInput; /*  */
     int                 cursorMode;
     char                mouseButtons[GLFW_MOUSE_BUTTON_LAST + 1];
     char                keys[GLFW_KEY_LAST + 1];
     // Virtual cursor position when cursor is disabled
+    // 在 cursor 被禁用的时候保存这个虚拟按键？？？
+    // 虚拟按键有什么用呢
     double              virtualCursorPosX, virtualCursorPosY;
     GLFWbool            rawMouseMotion;
 
@@ -573,8 +575,8 @@ struct _GLFWwindow
         GLFWcursorposfun          cursorPos;
         GLFWcursorenterfun        cursorEnter;
         GLFWscrollfun             scroll;
-        GLFWtouchfun              touch;
-        GLFWkeyfun                key;
+        GLFWtouchfun              touch; /* 触摸回调函数的抽象 */
+        GLFWkeyfun                key; /* 按键的回调函数 */
         GLFWcharfun               character;
         GLFWcharmodsfun           charmods;
         GLFWdropfun               drop;
@@ -675,7 +677,7 @@ struct _GLFWmutex
 };
 
 // Platform API structure
-//
+// 平台相关的初始化函数结构体
 struct _GLFWplatform
 {
     int platformID;

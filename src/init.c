@@ -40,7 +40,7 @@
 //       Any other mutable global variable is a bug
 
 // This contains all mutable state shared between compilation units of GLFW
-//
+// 包含了所有可变的状态，这是一个关键的变量
 _GLFWlibrary _glfw = { GLFW_FALSE };
 
 // These are outside of _glfw so they can be used before initialization and
@@ -53,7 +53,7 @@ static _GLFWinitconfig _glfwInitHints =
 {
     GLFW_TRUE,      // hat buttons
     GLFW_ANGLE_PLATFORM_TYPE_NONE, // ANGLE backend
-    GLFW_ANY_PLATFORM, // preferred platform
+    GLFW_ANY_PLATFORM, // preferred platform, 优先选用的 platform
     NULL,           // vkGetInstanceProcAddr function
     {
         GLFW_TRUE,  // macOS menu bar
